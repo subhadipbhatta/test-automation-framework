@@ -1,6 +1,6 @@
 # Test Automation Framework
 
-A comprehensive, enterprise-grade test automation framework built with Python, Playwright, and MCP support. This framework implements the Page Object Model pattern and supports web, API, and Salesforce automation.
+A comprehensive, enterprise-grade test automation framework built with Python, Playwright, and MCP support. This framework implements the Page Object Model pattern and supports web, API, Salesforce, and MySQL database automation.
 
 ## Features
 
@@ -8,6 +8,7 @@ A comprehensive, enterprise-grade test automation framework built with Python, P
 - **Web Automation** - Using Playwright for cross-browser testing
 - **API Automation** - Comprehensive REST API testing capabilities
 - **Salesforce Automation** - Dedicated support for Salesforce UI and API automation
+- **MySQL Database Testing** - Complete MySQL MCP server for database operations
 - **MCP Integration** - Model Context Protocol server for AI-powered test generation
 - **Async/Await Support** - Fully asynchronous framework for better performance
 - **Configuration Management** - Environment-based configuration with `.env` support
