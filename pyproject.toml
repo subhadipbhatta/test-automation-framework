@@ -1,0 +1,91 @@
+[build-system]
+requires = ["setuptools>=68.0", "wheel"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "test-automation-framework"
+version = "1.0.0"
+description = "Advanced Test Automation Framework with Playwright, MCP, and Python supporting Web, API, and Salesforce automation"
+readme = "README.md"
+requires-python = ">=3.9"
+license = {text = "MIT"}
+authors = [
+    {name = "Test Automation Team", email = "test@example.com"}
+]
+keywords = ["test-automation", "playwright", "mcp", "page-object-model", "pytest"]
+classifiers = [
+    "Development Status :: 4 - Beta",
+    "Intended Audience :: Developers",
+    "License :: OSI Approved :: MIT License",
+    "Programming Language :: Python :: 3",
+    "Programming Language :: Python :: 3.9",
+    "Programming Language :: Python :: 3.10",
+    "Programming Language :: Python :: 3.11",
+]
+
+dependencies = [
+    "pytest>=7.4.0",
+    "pytest-asyncio>=0.21.0",
+    "pytest-html>=3.2.0",
+    "pytest-xdist>=3.3.0",
+    "playwright>=1.40.0",
+    "aiohttp>=3.9.0",
+    "pydantic>=2.0.0",
+    "python-dotenv>=1.0.0",
+    "requests>=2.31.0",
+    "selenium>=4.13.0",
+    "pyotp>=2.9.0",
+    "cryptography>=41.0.0",
+    "pyyaml>=6.0",
+    "pillow>=10.0.0",
+    "allure-pytest>=2.13.0",
+]
+
+[project.optional-dependencies]
+dev = [
+    "black>=23.0.0",
+    "flake8>=6.1.0",
+    "mypy>=1.7.0",
+    "isort>=5.13.0",
+    "pytest-cov>=4.1.0",
+]
+mcp = [
+    "mcp>=1.0.0",
+]
+
+[project.urls]
+Homepage = "https://github.com/subhadipbhatta/test-automation-framework"
+Documentation = "https://github.com/subhadipbhatta/test-automation-framework/docs"
+Repository = "https://github.com/subhadipbhatta/test-automation-framework"
+"Bug Tracker" = "https://github.com/subhadipbhatta/test-automation-framework/issues"
+
+[tool.pytest.ini_options]
+minversion = "7.0"
+testpaths = ["tests"]
+python_files = ["test_*.py", "*_test.py"]
+python_classes = ["Test*"]
+python_functions = ["test_*"]
+addopts = "-v --tb=short --strict-markers"
+markers = [
+    "web: mark test as a web automation test",
+    "api: mark test as an API automation test",
+    "salesforce: mark test as a Salesforce automation test",
+    "smoke: mark test as a smoke test",
+    "regression: mark test as a regression test",
+    "slow: mark test as slow running",
+    "asyncio: mark test as async",
+]
+
+[tool.black]
+line-length = 100
+target-version = ["py39", "py310", "py311"]
+
+[tool.isort]
+profile = "black"
+line_length = 100
+
+[tool.mypy]
+python_version = "3.9"
+warn_return_any = true
+warn_unused_configs = true
+disallow_untyped_defs = false
