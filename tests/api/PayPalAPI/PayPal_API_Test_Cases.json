@@ -1,0 +1,1459 @@
+{
+  "api_name": "PayPal REST APIs",
+  "base_url": "https://api-m.sandbox.paypal.com",
+  "api_version": "v1/v2",
+  "description": "Comprehensive test cases for PayPal REST APIs including Authentication, Orders, Payments, Invoices, Subscriptions, Payouts, Webhooks, and more",
+  "authentication": {
+    "type": "OAuth2_ClientCredentials",
+    "token_endpoint": "/v1/oauth2/token",
+    "header": "Authorization: Bearer {access_token}",
+    "description": "OAuth 2.0 Client Credentials flow for API access"
+  },
+  "test_configuration": {
+    "environment": "sandbox",
+    "timeout": 30,
+    "retry_count": 3,
+    "parallel_execution": true,
+    "data_cleanup": true
+  },
+  "test_suites": [
+    {
+      "suite_id": "AUTH_SUITE",
+      "suite_name": "Authentication & Authorization Tests",
+      "description": "Tests for OAuth token generation, validation, and user authentication flows",
+      "execution_order": 1,
+      "test_cases": [
+        {
+          "test_id": "AUTH_001",
+          "test_name": "Generate Access Token - Valid Credentials",
+          "description": "Generate OAuth access token using valid client credentials",
+          "priority": "HIGH",
+          "method": "POST",
+          "endpoint": "/v1/oauth2/token",
+          "headers": {
+            "Content-Type": "application/x-www-form-urlencoded",
+            "Accept": "application/json",
+            "Authorization": "Basic {base64(client_id:client_secret)}"
+          },
+          "request_body": {
+            "grant_type": "client_credentials"
+          },
+          "expected_status_code": 200,
+          "expected_response_time": 3000,
+          "assertions": [
+            {
+              "type": "status_code",
+              "condition": "equals",
+              "expected": 200,
+              "description": "Response status should be 200 OK"
+            },
+            {
+              "type": "response_time",
+              "condition": "less_than",
+              "expected": 3000,
+              "description": "Response time should be under 3 seconds"
+            },
+            {
+              "type": "json_schema",
+              "expected": {
+                "type": "object",
+                "required": ["access_token", "token_type", "expires_in", "scope"],
+                "properties": {
+                  "access_token": {"type": "string", "minLength": 1},
+                  "token_type": {"type": "string", "enum": ["Bearer"]},
+                  "expires_in": {"type": "number", "minimum": 1},
+                  "scope": {"type": "string"}
+                }
+              },
+              "description": "Response should contain required OAuth token fields"
+            },
+            {
+              "type": "field_value",
+              "field": "token_type",
+              "condition": "equals",
+              "expected": "Bearer",
+              "description": "Token type should be Bearer"
+            },
+            {
+              "type": "field_presence",
+              "field": "access_token",
+              "condition": "not_empty",
+              "description": "Access token should not be empty"
+            }
+          ],
+          "postconditions": [
+            "Capture access_token for subsequent API calls",
+            "Set token expiry time for refresh logic",
+            "Validate token format matches JWT structure"
+          ]
+        },
+        {
+          "test_id": "AUTH_002",
+          "test_name": "Generate Access Token - Invalid Client ID",
+          "description": "Attempt to generate token with invalid client ID",
+          "priority": "HIGH",
+          "method": "POST",
+          "endpoint": "/v1/oauth2/token",
+          "headers": {
+            "Content-Type": "application/x-www-form-urlencoded",
+            "Accept": "application/json",
+            "Authorization": "Basic {base64(invalid_client_id:client_secret)}"
+          },
+          "request_body": {
+            "grant_type": "client_credentials"
+          },
+          "expected_status_code": 401,
+          "assertions": [
+            {
+              "type": "status_code",
+              "condition": "equals",
+              "expected": 401,
+              "description": "Should return 401 Unauthorized for invalid credentials"
+            },
+            {
+              "type": "json_path",
+              "path": "$.error",
+              "condition": "equals",
+              "expected": "invalid_client",
+              "description": "Error should indicate invalid client"
+            },
+            {
+              "type": "field_absence",
+              "field": "access_token",
+              "description": "No access token should be returned"
+            }
+          ]
+        },
+        {
+          "test_id": "AUTH_003",
+          "test_name": "Terminate Access Token",
+          "description": "Revoke an active access token",
+          "priority": "MEDIUM",
+          "method": "POST",
+          "endpoint": "/v1/oauth2/token/revoke",
+          "headers": {
+            "Content-Type": "application/x-www-form-urlencoded",
+            "Accept": "application/json",
+            "Authorization": "Basic {base64(client_id:client_secret)}"
+          },
+          "request_body": {
+            "token": "{{access_token}}",
+            "token_type_hint": "access_token"
+          },
+          "dependencies": ["AUTH_001"],
+          "expected_status_code": 200,
+          "assertions": [
+            {
+              "type": "status_code",
+              "condition": "equals",
+              "expected": 200,
+              "description": "Token should be successfully revoked"
+            },
+            {
+              "type": "response_body",
+              "condition": "empty_or_success",
+              "description": "Response body should be empty or contain success message"
+            }
+          ]
+        },
+        {
+          "test_id": "AUTH_004",
+          "test_name": "Get User Information",
+          "description": "Retrieve user profile information with valid token",
+          "priority": "MEDIUM",
+          "method": "GET",
+          "endpoint": "/v1/identity/oauth2/userinfo",
+          "headers": {
+            "Content-Type": "application/json",
+            "Authorization": "Bearer {{access_token}}"
+          },
+          "query_parameters": {
+            "schema": "paypalv1.1"
+          },
+          "dependencies": ["AUTH_001"],
+          "expected_status_code": 200,
+          "assertions": [
+            {
+              "type": "status_code",
+              "condition": "equals",
+              "expected": 200,
+              "description": "Should successfully retrieve user information"
+            },
+            {
+              "type": "json_schema",
+              "expected": {
+                "type": "object",
+                "properties": {
+                  "user_id": {"type": "string"},
+                  "name": {"type": "string"},
+                  "email": {"type": "string", "format": "email"}
+                }
+              },
+              "description": "Response should contain user profile fields"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "suite_id": "ORDERS_SUITE",
+      "suite_name": "Orders API Tests",
+      "description": "Comprehensive tests for order creation, retrieval, updates, authorization, and capture",
+      "execution_order": 2,
+      "test_cases": [
+        {
+          "test_id": "ORD_001",
+          "test_name": "Create Order - Standard Payment",
+          "description": "Create a new order with standard payment intent",
+          "priority": "HIGH",
+          "method": "POST",
+          "endpoint": "/v2/checkout/orders",
+          "headers": {
+            "Content-Type": "application/json",
+            "Authorization": "Bearer {{access_token}}",
+            "PayPal-Request-Id": "{{$randomUUID}}"
+          },
+          "request_body": {
+            "intent": "CAPTURE",
+            "purchase_units": [
+              {
+                "reference_id": "test_ref_001",
+                "amount": {
+                  "currency_code": "USD",
+                  "value": "100.00",
+                  "breakdown": {
+                    "item_total": {
+                      "currency_code": "USD",
+                      "value": "85.00"
+                    },
+                    "shipping": {
+                      "currency_code": "USD",
+                      "value": "10.00"
+                    },
+                    "tax_total": {
+                      "currency_code": "USD",
+                      "value": "5.00"
+                    }
+                  }
+                },
+                "items": [
+                  {
+                    "name": "Test Product",
+                    "description": "Test product for API validation",
+                    "unit_amount": {
+                      "currency_code": "USD",
+                      "value": "85.00"
+                    },
+                    "quantity": "1",
+                    "category": "PHYSICAL_GOODS"
+                  }
+                ],
+                "shipping": {
+                  "name": {
+                    "full_name": "John Doe"
+                  },
+                  "address": {
+                    "address_line_1": "123 Main St",
+                    "admin_area_2": "San Jose",
+                    "admin_area_1": "CA",
+                    "postal_code": "95131",
+                    "country_code": "US"
+                  }
+                }
+              }
+            ],
+            "application_context": {
+              "return_url": "https://example.com/return",
+              "cancel_url": "https://example.com/cancel",
+              "brand_name": "Test Store",
+              "locale": "en-US",
+              "landing_page": "BILLING",
+              "shipping_preference": "SET_PROVIDED_ADDRESS",
+              "user_action": "PAY_NOW"
+            }
+          },
+          "dependencies": ["AUTH_001"],
+          "expected_status_code": 201,
+          "expected_response_time": 5000,
+          "assertions": [
+            {
+              "type": "status_code",
+              "condition": "equals",
+              "expected": 201,
+              "description": "Order should be created successfully"
+            },
+            {
+              "type": "response_time",
+              "condition": "less_than",
+              "expected": 5000,
+              "description": "Order creation should complete within 5 seconds"
+            },
+            {
+              "type": "json_schema",
+              "expected": {
+                "type": "object",
+                "required": ["id", "status", "links", "purchase_units"],
+                "properties": {
+                  "id": {"type": "string", "pattern": "^[0-9A-Z]{17}$"},
+                  "status": {"type": "string", "enum": ["CREATED", "SAVED", "APPROVED"]},
+                  "links": {"type": "array", "minItems": 1}
+                }
+              },
+              "description": "Response should contain order structure with ID, status, and links"
+            },
+            {
+              "type": "field_value",
+              "field": "status",
+              "condition": "equals",
+              "expected": "CREATED",
+              "description": "Initial order status should be CREATED"
+            },
+            {
+              "type": "array_contains",
+              "field": "links",
+              "condition": "contains_rel",
+              "expected": ["self", "approve", "update", "capture"],
+              "description": "Links should contain required HATEOAS relationships"
+            },
+            {
+              "type": "json_path",
+              "path": "$.purchase_units[0].amount.value",
+              "condition": "equals",
+              "expected": "100.00",
+              "description": "Order total should match request amount"
+            },
+            {
+              "type": "json_path",
+              "path": "$.purchase_units[0].reference_id",
+              "condition": "equals",
+              "expected": "test_ref_001",
+              "description": "Reference ID should match request"
+            }
+          ],
+          "postconditions": [
+            "Capture order ID for subsequent tests",
+            "Extract approve link for payment flow",
+            "Validate HATEOAS links are accessible"
+          ]
+        },
+        {
+          "test_id": "ORD_002",
+          "test_name": "Show Order Details",
+          "description": "Retrieve details of an existing order",
+          "priority": "HIGH",
+          "method": "GET",
+          "endpoint": "/v2/checkout/orders/{{order_id}}",
+          "headers": {
+            "Content-Type": "application/json",
+            "Authorization": "Bearer {{access_token}}"
+          },
+          "dependencies": ["AUTH_001", "ORD_001"],
+          "expected_status_code": 200,
+          "assertions": [
+            {
+              "type": "status_code",
+              "condition": "equals",
+              "expected": 200,
+              "description": "Should successfully retrieve order details"
+            },
+            {
+              "type": "json_path",
+              "path": "$.id",
+              "condition": "equals",
+              "expected": "{{order_id}}",
+              "description": "Returned order ID should match requested ID"
+            },
+            {
+              "type": "field_presence",
+              "field": "purchase_units",
+              "condition": "exists",
+              "description": "Order should contain purchase units"
+            },
+            {
+              "type": "json_path",
+              "path": "$.purchase_units[0].amount.currency_code",
+              "condition": "equals",
+              "expected": "USD",
+              "description": "Currency code should be preserved"
+            }
+          ]
+        },
+        {
+          "test_id": "ORD_003",
+          "test_name": "Update Order",
+          "description": "Update an existing order with PATCH operations",
+          "priority": "MEDIUM",
+          "method": "PATCH",
+          "endpoint": "/v2/checkout/orders/{{order_id}}",
+          "headers": {
+            "Content-Type": "application/json",
+            "Authorization": "Bearer {{access_token}}"
+          },
+          "request_body": [
+            {
+              "op": "replace",
+              "path": "/purchase_units/@reference_id=='test_ref_001'/description",
+              "value": "Updated order description for testing"
+            },
+            {
+              "op": "replace",
+              "path": "/purchase_units/@reference_id=='test_ref_001'/custom_id",
+              "value": "UPDATED_CUSTOM_ID_001"
+            }
+          ],
+          "dependencies": ["AUTH_001", "ORD_001"],
+          "expected_status_code": 204,
+          "assertions": [
+            {
+              "type": "status_code",
+              "condition": "equals",
+              "expected": 204,
+              "description": "Order should be updated successfully with no content"
+            },
+            {
+              "type": "response_body",
+              "condition": "empty",
+              "description": "Response body should be empty for successful PATCH"
+            }
+          ],
+          "postconditions": [
+            "Verify updates by retrieving order details",
+            "Confirm description and custom_id changes"
+          ]
+        },
+        {
+          "test_id": "ORD_004",
+          "test_name": "Authorize Payment for Order",
+          "description": "Authorize payment for an approved order",
+          "priority": "HIGH",
+          "method": "POST",
+          "endpoint": "/v2/checkout/orders/{{order_id}}/authorize",
+          "headers": {
+            "Content-Type": "application/json",
+            "Authorization": "Bearer {{access_token}}",
+            "PayPal-Request-Id": "{{$randomUUID}}"
+          },
+          "request_body": {},
+          "dependencies": ["AUTH_001", "ORD_001"],
+          "expected_status_code": 201,
+          "assertions": [
+            {
+              "type": "status_code",
+              "condition": "equals",
+              "expected": 201,
+              "description": "Authorization should be created successfully"
+            },
+            {
+              "type": "json_path",
+              "path": "$.status",
+              "condition": "in",
+              "expected": ["COMPLETED", "PENDING"],
+              "description": "Order status should be COMPLETED or PENDING after authorization"
+            },
+            {
+              "type": "json_path",
+              "path": "$.purchase_units[0].payments.authorizations[0].status",
+              "condition": "in",
+              "expected": ["CREATED", "CAPTURED", "PENDING"],
+              "description": "Authorization status should be valid"
+            }
+          ],
+          "postconditions": [
+            "Capture authorization ID for subsequent operations",
+            "Verify authorization amount matches order total"
+          ]
+        },
+        {
+          "test_id": "ORD_005",
+          "test_name": "Capture Payment for Order",
+          "description": "Capture payment for an existing order",
+          "priority": "HIGH",
+          "method": "POST",
+          "endpoint": "/v2/checkout/orders/{{order_id}}/capture",
+          "headers": {
+            "Content-Type": "application/json",
+            "Authorization": "Bearer {{access_token}}",
+            "PayPal-Request-Id": "{{$randomUUID}}"
+          },
+          "request_body": {},
+          "dependencies": ["AUTH_001", "ORD_001"],
+          "expected_status_code": 201,
+          "assertions": [
+            {
+              "type": "status_code",
+              "condition": "equals",
+              "expected": 201,
+              "description": "Payment should be captured successfully"
+            },
+            {
+              "type": "json_path",
+              "path": "$.status",
+              "condition": "equals",
+              "expected": "COMPLETED",
+              "description": "Order status should be COMPLETED after capture"
+            },
+            {
+              "type": "json_path",
+              "path": "$.purchase_units[0].payments.captures[0].status",
+              "condition": "equals",
+              "expected": "COMPLETED",
+              "description": "Capture status should be COMPLETED"
+            },
+            {
+              "type": "json_path",
+              "path": "$.purchase_units[0].payments.captures[0].amount.value",
+              "condition": "equals",
+              "expected": "100.00",
+              "description": "Captured amount should match order total"
+            }
+          ],
+          "postconditions": [
+            "Capture transaction ID for refund tests",
+            "Verify payment completion in merchant account",
+            "Update order status tracking"
+          ]
+        }
+      ]
+    },
+    {
+      "suite_id": "PAYMENTS_SUITE",
+      "suite_name": "Payments API Tests",
+      "description": "Tests for payment authorizations, captures, refunds, and payment details",
+      "execution_order": 3,
+      "test_cases": [
+        {
+          "test_id": "PAY_001",
+          "test_name": "Show Authorization Details",
+          "description": "Retrieve details of a payment authorization",
+          "priority": "MEDIUM",
+          "method": "GET",
+          "endpoint": "/v2/payments/authorizations/{{authorization_id}}",
+          "headers": {
+            "Content-Type": "application/json",
+            "Authorization": "Bearer {{access_token}}"
+          },
+          "dependencies": ["AUTH_001", "ORD_004"],
+          "expected_status_code": 200,
+          "assertions": [
+            {
+              "type": "status_code",
+              "condition": "equals",
+              "expected": 200,
+              "description": "Should successfully retrieve authorization details"
+            },
+            {
+              "type": "json_path",
+              "path": "$.id",
+              "condition": "equals",
+              "expected": "{{authorization_id}}",
+              "description": "Authorization ID should match requested ID"
+            },
+            {
+              "type": "field_presence",
+              "field": "amount",
+              "condition": "exists",
+              "description": "Authorization should contain amount information"
+            }
+          ]
+        },
+        {
+          "test_id": "PAY_002",
+          "test_name": "Capture Authorized Payment",
+          "description": "Capture funds from an authorized payment",
+          "priority": "HIGH",
+          "method": "POST",
+          "endpoint": "/v2/payments/authorizations/{{authorization_id}}/capture",
+          "headers": {
+            "Content-Type": "application/json",
+            "Authorization": "Bearer {{access_token}}",
+            "PayPal-Request-Id": "{{$randomUUID}}"
+          },
+          "request_body": {
+            "amount": {
+              "value": "100.00",
+              "currency_code": "USD"
+            },
+            "final_capture": true,
+            "note_to_payer": "Thank you for your purchase",
+            "soft_descriptor": "TEST STORE"
+          },
+          "dependencies": ["AUTH_001", "ORD_004"],
+          "expected_status_code": 201,
+          "assertions": [
+            {
+              "type": "status_code",
+              "condition": "equals",
+              "expected": 201,
+              "description": "Payment should be captured successfully"
+            },
+            {
+              "type": "json_path",
+              "path": "$.status",
+              "condition": "equals",
+              "expected": "COMPLETED",
+              "description": "Capture status should be COMPLETED"
+            },
+            {
+              "type": "json_path",
+              "path": "$.amount.value",
+              "condition": "equals",
+              "expected": "100.00",
+              "description": "Captured amount should match request"
+            }
+          ],
+          "postconditions": [
+            "Capture the capture ID for refund testing",
+            "Verify funds transfer to merchant account"
+          ]
+        },
+        {
+          "test_id": "PAY_003",
+          "test_name": "Show Capture Details",
+          "description": "Retrieve details of a payment capture",
+          "priority": "MEDIUM",
+          "method": "GET",
+          "endpoint": "/v2/payments/captures/{{capture_id}}",
+          "headers": {
+            "Content-Type": "application/json",
+            "Authorization": "Bearer {{access_token}}"
+          },
+          "dependencies": ["AUTH_001", "PAY_002"],
+          "expected_status_code": 200,
+          "assertions": [
+            {
+              "type": "status_code",
+              "condition": "equals",
+              "expected": 200,
+              "description": "Should successfully retrieve capture details"
+            },
+            {
+              "type": "json_path",
+              "path": "$.id",
+              "condition": "equals",
+              "expected": "{{capture_id}}",
+              "description": "Capture ID should match requested ID"
+            },
+            {
+              "type": "json_path",
+              "path": "$.status",
+              "condition": "equals",
+              "expected": "COMPLETED",
+              "description": "Capture should be in COMPLETED status"
+            }
+          ]
+        },
+        {
+          "test_id": "PAY_004",
+          "test_name": "Refund Captured Payment - Full Refund",
+          "description": "Process a full refund for a captured payment",
+          "priority": "HIGH",
+          "method": "POST",
+          "endpoint": "/v2/payments/captures/{{capture_id}}/refund",
+          "headers": {
+            "Content-Type": "application/json",
+            "Authorization": "Bearer {{access_token}}",
+            "PayPal-Request-Id": "{{$randomUUID}}"
+          },
+          "request_body": {
+            "amount": {
+              "value": "100.00",
+              "currency_code": "USD"
+            },
+            "note_to_payer": "Refund for order cancellation"
+          },
+          "dependencies": ["AUTH_001", "PAY_002"],
+          "expected_status_code": 201,
+          "assertions": [
+            {
+              "type": "status_code",
+              "condition": "equals",
+              "expected": 201,
+              "description": "Refund should be processed successfully"
+            },
+            {
+              "type": "json_path",
+              "path": "$.status",
+              "condition": "in",
+              "expected": ["COMPLETED", "PENDING"],
+              "description": "Refund status should be COMPLETED or PENDING"
+            },
+            {
+              "type": "json_path",
+              "path": "$.amount.value",
+              "condition": "equals",
+              "expected": "100.00",
+              "description": "Refund amount should match request"
+            }
+          ],
+          "postconditions": [
+            "Capture refund ID for tracking",
+            "Verify refund appears in merchant account",
+            "Confirm customer receives refund notification"
+          ]
+        },
+        {
+          "test_id": "PAY_005",
+          "test_name": "Show Refund Details",
+          "description": "Retrieve details of a processed refund",
+          "priority": "MEDIUM",
+          "method": "GET",
+          "endpoint": "/v2/payments/refunds/{{refund_id}}",
+          "headers": {
+            "Content-Type": "application/json",
+            "Authorization": "Bearer {{access_token}}"
+          },
+          "dependencies": ["AUTH_001", "PAY_004"],
+          "expected_status_code": 200,
+          "assertions": [
+            {
+              "type": "status_code",
+              "condition": "equals",
+              "expected": 200,
+              "description": "Should successfully retrieve refund details"
+            },
+            {
+              "type": "json_path",
+              "path": "$.id",
+              "condition": "equals",
+              "expected": "{{refund_id}}",
+              "description": "Refund ID should match requested ID"
+            },
+            {
+              "type": "field_presence",
+              "field": "amount",
+              "condition": "exists",
+              "description": "Refund should contain amount information"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "suite_id": "INVOICES_SUITE",
+      "suite_name": "Invoices API Tests",
+      "description": "Tests for invoice creation, management, and payment processing",
+      "execution_order": 4,
+      "test_cases": [
+        {
+          "test_id": "INV_001",
+          "test_name": "Generate Invoice Number",
+          "description": "Generate a unique invoice number",
+          "priority": "MEDIUM",
+          "method": "POST",
+          "endpoint": "/v2/invoicing/generate-next-invoice-number",
+          "headers": {
+            "Content-Type": "application/json",
+            "Authorization": "Bearer {{access_token}}"
+          },
+          "request_body": {},
+          "dependencies": ["AUTH_001"],
+          "expected_status_code": 200,
+          "assertions": [
+            {
+              "type": "status_code",
+              "condition": "equals",
+              "expected": 200,
+              "description": "Should successfully generate invoice number"
+            },
+            {
+              "type": "field_presence",
+              "field": "invoice_number",
+              "condition": "not_empty",
+              "description": "Should return a valid invoice number"
+            },
+            {
+              "type": "json_path",
+              "path": "$.invoice_number",
+              "condition": "matches_pattern",
+              "expected": "^[A-Z0-9-]+$",
+              "description": "Invoice number should follow expected format"
+            }
+          ],
+          "postconditions": [
+            "Capture invoice number for invoice creation"
+          ]
+        },
+        {
+          "test_id": "INV_002",
+          "test_name": "Create Draft Invoice",
+          "description": "Create a new draft invoice with line items",
+          "priority": "HIGH",
+          "method": "POST",
+          "endpoint": "/v2/invoicing/invoices",
+          "headers": {
+            "Content-Type": "application/json",
+            "Authorization": "Bearer {{access_token}}"
+          },
+          "request_body": {
+            "detail": {
+              "invoice_number": "{{invoice_number}}",
+              "reference": "TEST-INV-001",
+              "invoice_date": "2026-02-15",
+              "currency_code": "USD",
+              "note": "Test invoice for API validation",
+              "payment_term": {
+                "term_type": "NET_30"
+              }
+            },
+            "invoicer": {
+              "name": {
+                "given_name": "Test",
+                "surname": "Merchant"
+              },
+              "address": {
+                "address_line_1": "123 Business St",
+                "admin_area_2": "San Jose",
+                "admin_area_1": "CA",
+                "postal_code": "95131",
+                "country_code": "US"
+              },
+              "email_address": "merchant@teststore.com"
+            },
+            "primary_recipients": [
+              {
+                "billing_info": {
+                  "name": {
+                    "given_name": "John",
+                    "surname": "Doe"
+                  },
+                  "address": {
+                    "address_line_1": "456 Customer Ave",
+                    "admin_area_2": "San Jose",
+                    "admin_area_1": "CA",
+                    "postal_code": "95131",
+                    "country_code": "US"
+                  },
+                  "email_address": "customer@example.com"
+                }
+              }
+            ],
+            "items": [
+              {
+                "name": "Test Product",
+                "description": "Test product for invoice validation",
+                "quantity": "2",
+                "unit_amount": {
+                  "currency_code": "USD",
+                  "value": "50.00"
+                },
+                "unit_of_measure": "QUANTITY"
+              }
+            ],
+            "configuration": {
+              "partial_payment": {
+                "allow_partial_payment": true,
+                "minimum_amount_due": {
+                  "currency_code": "USD",
+                  "value": "20.00"
+                }
+              }
+            }
+          },
+          "dependencies": ["AUTH_001", "INV_001"],
+          "expected_status_code": 201,
+          "expected_response_time": 5000,
+          "assertions": [
+            {
+              "type": "status_code",
+              "condition": "equals",
+              "expected": 201,
+              "description": "Invoice should be created successfully"
+            },
+            {
+              "type": "response_time",
+              "condition": "less_than",
+              "expected": 5000,
+              "description": "Invoice creation should complete within 5 seconds"
+            },
+            {
+              "type": "json_schema",
+              "expected": {
+                "type": "object",
+                "required": ["id", "status", "detail", "invoicer", "primary_recipients"],
+                "properties": {
+                  "id": {"type": "string"},
+                  "status": {"type": "string", "enum": ["DRAFT", "SENT", "SCHEDULED"]},
+                  "href": {"type": "string", "format": "uri"}
+                }
+              },
+              "description": "Response should contain invoice structure"
+            },
+            {
+              "type": "json_path",
+              "path": "$.status",
+              "condition": "equals",
+              "expected": "DRAFT",
+              "description": "New invoice should be in DRAFT status"
+            },
+            {
+              "type": "json_path",
+              "path": "$.detail.invoice_number",
+              "condition": "equals",
+              "expected": "{{invoice_number}}",
+              "description": "Invoice number should match request"
+            }
+          ],
+          "postconditions": [
+            "Capture invoice ID for subsequent operations",
+            "Verify invoice total calculation",
+            "Extract HATEOAS links for invoice operations"
+          ]
+        },
+        {
+          "test_id": "INV_003",
+          "test_name": "Send Invoice",
+          "description": "Send a draft invoice to the recipient",
+          "priority": "HIGH",
+          "method": "POST",
+          "endpoint": "/v2/invoicing/invoices/{{invoice_id}}/send",
+          "headers": {
+            "Content-Type": "application/json",
+            "Authorization": "Bearer {{access_token}}"
+          },
+          "request_body": {
+            "send_to_recipient": true,
+            "send_to_invoicer": false
+          },
+          "dependencies": ["AUTH_001", "INV_002"],
+          "expected_status_code": 202,
+          "assertions": [
+            {
+              "type": "status_code",
+              "condition": "equals",
+              "expected": 202,
+              "description": "Invoice should be accepted for sending"
+            },
+            {
+              "type": "response_body",
+              "condition": "empty",
+              "description": "Send operation should return empty response"
+            }
+          ],
+          "postconditions": [
+            "Verify invoice status changes to SENT",
+            "Confirm email notification sent to recipient"
+          ]
+        },
+        {
+          "test_id": "INV_004",
+          "test_name": "Get Invoice Details",
+          "description": "Retrieve detailed information about an invoice",
+          "priority": "MEDIUM",
+          "method": "GET",
+          "endpoint": "/v2/invoicing/invoices/{{invoice_id}}",
+          "headers": {
+            "Content-Type": "application/json",
+            "Authorization": "Bearer {{access_token}}"
+          },
+          "dependencies": ["AUTH_001", "INV_002"],
+          "expected_status_code": 200,
+          "assertions": [
+            {
+              "type": "status_code",
+              "condition": "equals",
+              "expected": 200,
+              "description": "Should successfully retrieve invoice details"
+            },
+            {
+              "type": "json_path",
+              "path": "$.id",
+              "condition": "equals",
+              "expected": "{{invoice_id}}",
+              "description": "Invoice ID should match requested ID"
+            },
+            {
+              "type": "field_presence",
+              "field": "detail",
+              "condition": "exists",
+              "description": "Invoice should contain detail section"
+            },
+            {
+              "type": "json_path",
+              "path": "$.detail.currency_code",
+              "condition": "equals",
+              "expected": "USD",
+              "description": "Currency code should be preserved"
+            }
+          ]
+        },
+        {
+          "test_id": "INV_005",
+          "test_name": "List Invoices",
+          "description": "Retrieve a list of invoices with pagination",
+          "priority": "MEDIUM",
+          "method": "GET",
+          "endpoint": "/v2/invoicing/invoices",
+          "headers": {
+            "Content-Type": "application/json",
+            "Authorization": "Bearer {{access_token}}"
+          },
+          "query_parameters": {
+            "page": "1",
+            "page_size": "20",
+            "total_required": "true"
+          },
+          "dependencies": ["AUTH_001"],
+          "expected_status_code": 200,
+          "assertions": [
+            {
+              "type": "status_code",
+              "condition": "equals",
+              "expected": 200,
+              "description": "Should successfully retrieve invoice list"
+            },
+            {
+              "type": "json_schema",
+              "expected": {
+                "type": "object",
+                "properties": {
+                  "invoices": {"type": "array"},
+                  "links": {"type": "array"},
+                  "total_pages": {"type": "integer"},
+                  "total_items": {"type": "integer"}
+                }
+              },
+              "description": "Response should contain paginated invoice list"
+            },
+            {
+              "type": "field_presence",
+              "field": "invoices",
+              "condition": "is_array",
+              "description": "Invoices should be returned as array"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "suite_id": "SUBSCRIPTIONS_SUITE",
+      "suite_name": "Subscriptions API Tests",
+      "description": "Tests for subscription products, plans, and recurring billing",
+      "execution_order": 5,
+      "test_cases": [
+        {
+          "test_id": "SUB_001",
+          "test_name": "Create Product for Subscription",
+          "description": "Create a product that can be used for subscription plans",
+          "priority": "HIGH",
+          "method": "POST",
+          "endpoint": "/v1/catalogs/products",
+          "headers": {
+            "Content-Type": "application/json",
+            "Authorization": "Bearer {{access_token}}",
+            "PayPal-Request-Id": "{{$randomUUID}}"
+          },
+          "request_body": {
+            "name": "Premium Subscription Service",
+            "description": "Premium subscription service with advanced features",
+            "type": "SERVICE",
+            "category": "SOFTWARE",
+            "image_url": "https://example.com/product-image.jpg",
+            "home_url": "https://example.com/premium-service"
+          },
+          "dependencies": ["AUTH_001"],
+          "expected_status_code": 201,
+          "assertions": [
+            {
+              "type": "status_code",
+              "condition": "equals",
+              "expected": 201,
+              "description": "Product should be created successfully"
+            },
+            {
+              "type": "json_schema",
+              "expected": {
+                "type": "object",
+                "required": ["id", "name", "description"],
+                "properties": {
+                  "id": {"type": "string"},
+                  "name": {"type": "string"},
+                  "description": {"type": "string"},
+                  "links": {"type": "array"}
+                }
+              },
+              "description": "Response should contain product details"
+            },
+            {
+              "type": "json_path",
+              "path": "$.name",
+              "condition": "equals",
+              "expected": "Premium Subscription Service",
+              "description": "Product name should match request"
+            }
+          ],
+          "postconditions": [
+            "Capture product ID for plan creation",
+            "Verify product appears in catalog"
+          ]
+        },
+        {
+          "test_id": "SUB_002",
+          "test_name": "Create Subscription Plan",
+          "description": "Create a billing plan for recurring subscriptions",
+          "priority": "HIGH",
+          "method": "POST",
+          "endpoint": "/v1/billing/plans",
+          "headers": {
+            "Content-Type": "application/json",
+            "Authorization": "Bearer {{access_token}}",
+            "PayPal-Request-Id": "{{$randomUUID}}"
+          },
+          "request_body": {
+            "product_id": "{{product_id}}",
+            "name": "Premium Monthly Plan",
+            "description": "Premium subscription billed monthly",
+            "status": "ACTIVE",
+            "billing_cycles": [
+              {
+                "frequency": {
+                  "interval_unit": "MONTH",
+                  "interval_count": 1
+                },
+                "tenure_type": "REGULAR",
+                "sequence": 1,
+                "total_cycles": 0,
+                "pricing_scheme": {
+                  "fixed_price": {
+                    "value": "29.99",
+                    "currency_code": "USD"
+                  }
+                }
+              }
+            ],
+            "payment_preferences": {
+              "auto_bill_outstanding": true,
+              "setup_fee": {
+                "value": "5.00",
+                "currency_code": "USD"
+              },
+              "setup_fee_failure_action": "CONTINUE",
+              "payment_failure_threshold": 3
+            },
+            "taxes": {
+              "percentage": "8.25",
+              "inclusive": false
+            }
+          },
+          "dependencies": ["AUTH_001", "SUB_001"],
+          "expected_status_code": 201,
+          "assertions": [
+            {
+              "type": "status_code",
+              "condition": "equals",
+              "expected": 201,
+              "description": "Billing plan should be created successfully"
+            },
+            {
+              "type": "json_schema",
+              "expected": {
+                "type": "object",
+                "required": ["id", "product_id", "name", "status"],
+                "properties": {
+                  "id": {"type": "string"},
+                  "product_id": {"type": "string"},
+                  "status": {"type": "string", "enum": ["CREATED", "ACTIVE"]},
+                  "billing_cycles": {"type": "array", "minItems": 1}
+                }
+              },
+              "description": "Response should contain plan details"
+            },
+            {
+              "type": "json_path",
+              "path": "$.product_id",
+              "condition": "equals",
+              "expected": "{{product_id}}",
+              "description": "Plan should be linked to correct product"
+            }
+          ],
+          "postconditions": [
+            "Capture billing plan ID for subscription creation",
+            "Verify plan pricing and cycles"
+          ]
+        },
+        {
+          "test_id": "SUB_003",
+          "test_name": "Create Subscription",
+          "description": "Create a new subscription using the billing plan",
+          "priority": "HIGH",
+          "method": "POST",
+          "endpoint": "/v1/billing/subscriptions",
+          "headers": {
+            "Content-Type": "application/json",
+            "Authorization": "Bearer {{access_token}}",
+            "PayPal-Request-Id": "{{$randomUUID}}"
+          },
+          "request_body": {
+            "plan_id": "{{billing_plan_id}}",
+            "start_time": "2026-02-20T00:00:00Z",
+            "quantity": "1",
+            "shipping_amount": {
+              "currency_code": "USD",
+              "value": "0.00"
+            },
+            "subscriber": {
+              "name": {
+                "given_name": "John",
+                "surname": "Doe"
+              },
+              "email_address": "subscriber@example.com",
+              "shipping_address": {
+                "name": {
+                  "full_name": "John Doe"
+                },
+                "address": {
+                  "address_line_1": "123 Subscriber St",
+                  "admin_area_2": "San Jose",
+                  "admin_area_1": "CA",
+                  "postal_code": "95131",
+                  "country_code": "US"
+                }
+              }
+            },
+            "application_context": {
+              "brand_name": "Test Subscription Service",
+              "locale": "en-US",
+              "shipping_preference": "SET_PROVIDED_ADDRESS",
+              "user_action": "SUBSCRIBE_NOW",
+              "payment_method": {
+                "payer_selected": "PAYPAL",
+                "payee_preferred": "IMMEDIATE_PAYMENT_REQUIRED"
+              },
+              "return_url": "https://example.com/return",
+              "cancel_url": "https://example.com/cancel"
+            }
+          },
+          "dependencies": ["AUTH_001", "SUB_002"],
+          "expected_status_code": 201,
+          "assertions": [
+            {
+              "type": "status_code",
+              "condition": "equals",
+              "expected": 201,
+              "description": "Subscription should be created successfully"
+            },
+            {
+              "type": "json_schema",
+              "expected": {
+                "type": "object",
+                "required": ["id", "status", "plan_id"],
+                "properties": {
+                  "id": {"type": "string"},
+                  "status": {"type": "string"},
+                  "plan_id": {"type": "string"},
+                  "links": {"type": "array"}
+                }
+              },
+              "description": "Response should contain subscription details"
+            },
+            {
+              "type": "json_path",
+              "path": "$.plan_id",
+              "condition": "equals",
+              "expected": "{{billing_plan_id}}",
+              "description": "Subscription should be linked to correct plan"
+            },
+            {
+              "type": "array_contains",
+              "field": "links",
+              "condition": "contains_rel",
+              "expected": ["approve"],
+              "description": "Response should contain approval link"
+            }
+          ],
+          "postconditions": [
+            "Capture subscription ID for management operations",
+            "Extract approval link for subscriber activation"
+          ]
+        },
+        {
+          "test_id": "SUB_004",
+          "test_name": "Show Subscription Details",
+          "description": "Retrieve detailed information about a subscription",
+          "priority": "MEDIUM",
+          "method": "GET",
+          "endpoint": "/v1/billing/subscriptions/{{subscription_id}}",
+          "headers": {
+            "Content-Type": "application/json",
+            "Authorization": "Bearer {{access_token}}"
+          },
+          "dependencies": ["AUTH_001", "SUB_003"],
+          "expected_status_code": 200,
+          "assertions": [
+            {
+              "type": "status_code",
+              "condition": "equals",
+              "expected": 200,
+              "description": "Should successfully retrieve subscription details"
+            },
+            {
+              "type": "json_path",
+              "path": "$.id",
+              "condition": "equals",
+              "expected": "{{subscription_id}}",
+              "description": "Subscription ID should match requested ID"
+            },
+            {
+              "type": "field_presence",
+              "field": "billing_info",
+              "condition": "exists",
+              "description": "Subscription should contain billing information"
+            }
+          ]
+        }
+      ]
+    }
+  ],
+  "negative_test_cases": [
+    {
+      "test_id": "NEG_001",
+      "test_name": "Authentication - Invalid Client Credentials",
+      "description": "Verify proper error handling for invalid client credentials",
+      "priority": "HIGH",
+      "method": "POST",
+      "endpoint": "/v1/oauth2/token",
+      "headers": {
+        "Content-Type": "application/x-www-form-urlencoded",
+        "Authorization": "Basic {base64(invalid_id:invalid_secret)}"
+      },
+      "request_body": {
+        "grant_type": "client_credentials"
+      },
+      "expected_status_code": 401,
+      "assertions": [
+        {
+          "type": "status_code",
+          "condition": "equals",
+          "expected": 401,
+          "description": "Should return 401 for invalid credentials"
+        },
+        {
+          "type": "json_path",
+          "path": "$.error",
+          "condition": "equals",
+          "expected": "invalid_client",
+          "description": "Error should indicate invalid client"
+        }
+      ]
+    },
+    {
+      "test_id": "NEG_002",
+      "test_name": "Orders - Invalid Currency Code",
+      "description": "Test order creation with unsupported currency",
+      "priority": "MEDIUM",
+      "method": "POST",
+      "endpoint": "/v2/checkout/orders",
+      "headers": {
+        "Content-Type": "application/json",
+        "Authorization": "Bearer {{access_token}}"
+      },
+      "request_body": {
+        "intent": "CAPTURE",
+        "purchase_units": [
+          {
+            "amount": {
+              "currency_code": "INVALID",
+              "value": "100.00"
+            }
+          }
+        ]
+      },
+      "dependencies": ["AUTH_001"],
+      "expected_status_code": 422,
+      "assertions": [
+        {
+          "type": "status_code",
+          "condition": "equals",
+          "expected": 422,
+          "description": "Should return 422 for invalid currency"
+        },
+        {
+          "type": "json_path",
+          "path": "$.name",
+          "condition": "equals",
+          "expected": "UNPROCESSABLE_ENTITY",
+          "description": "Error name should indicate unprocessable entity"
+        }
+      ]
+    },
+    {
+      "test_id": "NEG_003",
+      "test_name": "Orders - Missing Required Fields",
+      "description": "Test order creation without required fields",
+      "priority": "MEDIUM",
+      "method": "POST",
+      "endpoint": "/v2/checkout/orders",
+      "headers": {
+        "Content-Type": "application/json",
+        "Authorization": "Bearer {{access_token}}"
+      },
+      "request_body": {
+        "intent": "CAPTURE"
+      },
+      "dependencies": ["AUTH_001"],
+      "expected_status_code": 400,
+      "assertions": [
+        {
+          "type": "status_code",
+          "condition": "equals",
+          "expected": 400,
+          "description": "Should return 400 for missing required fields"
+        },
+        {
+          "type": "json_path",
+          "path": "$.name",
+          "condition": "equals",
+          "expected": "INVALID_REQUEST",
+          "description": "Error should indicate invalid request"
+        }
+      ]
+    }
+  ],
+  "performance_benchmarks": {
+    "authentication_token_generation": {
+      "max_response_time": 3000,
+      "expected_tps": 100
+    },
+    "order_creation": {
+      "max_response_time": 5000,
+      "expected_tps": 50
+    },
+    "payment_capture": {
+      "max_response_time": 10000,
+      "expected_tps": 30
+    },
+    "invoice_generation": {
+      "max_response_time": 5000,
+      "expected_tps": 20
+    }
+  },
+  "security_considerations": [
+    "Validate HTTPS enforcement for all endpoints",
+    "Test rate limiting on authentication endpoints", 
+    "Verify PCI DSS compliance for payment data",
+    "Test CSRF protection mechanisms",
+    "Validate input sanitization for all user inputs",
+    "Test authorization bypass attempts",
+    "Verify sensitive data is not logged or exposed"
+  ],
+  "test_execution_notes": {
+    "prerequisites": [
+      "Valid PayPal Developer Account with sandbox access",
+      "Client ID and Client Secret from PayPal Developer Dashboard",
+      "Test environment configured for sandbox operations",
+      "Network connectivity to PayPal sandbox APIs"
+    ],
+    "execution_sequence": [
+      "Execute authentication tests first to obtain access tokens",
+      "Run CRUD operations in dependency order (Create → Read → Update → Delete)",
+      "Execute negative tests to validate error handling",
+      "Run performance tests under controlled load conditions",
+      "Execute cleanup procedures to remove test data"
+    ],
+    "data_management": [
+      "Use sandbox environment to avoid real financial transactions",
+      "Implement proper cleanup of created resources",
+      "Use unique identifiers to avoid test conflicts",
+      "Maintain test data isolation between test runs"
+    ]
+  }
+}

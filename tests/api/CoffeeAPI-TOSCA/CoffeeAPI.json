@@ -1,0 +1,271 @@
+{
+  "api_test_collection": {
+    "collection_name": "Coffees API Testing",
+    "base_url": "https://webservice.toscacloud.com/training",
+    "endpoints": {
+      "coffees": "/api/Coffees"
+    },
+    "test_cases": [
+      {
+        "test_id": "GET_001",
+        "test_name": "Get All Coffees",
+        "method": "GET",
+        "endpoint": "/api/Coffees",
+        "headers": {
+          "Accept": "application/json",
+          "ServiceAccessKey": "{{CAPTURED_KEY}}"
+        },
+        "expected_response": {
+          "status_code": 200,
+          "response_structure": [
+            {
+              "id": "integer",
+              "name": "string",
+              "description": "string"
+            }
+          ]
+        },
+        "validation_rules": [
+          "Response should contain array of coffee objects",
+          "Each object must have 'id', 'name', 'description' fields",
+          "Status code should be 200"
+        ]
+      },
+      {
+        "test_id": "GET_002",
+        "test_name": "Get Coffee by ID",
+        "method": "GET",
+        "endpoint": "/api/Coffees/{id}",
+        "headers": {
+          "Accept": "application/json",
+          "ServiceAccessKey": "{{CAPTURED_KEY}}"
+        },
+        "path_parameters": {
+          "id": "{{CAPTURED_ID_FROM_GET_ALL}}"
+        },
+        "expected_response": {
+          "status_code": 200,
+          "response_structure": {
+            "id": "integer",
+            "name": "string",
+            "description": "string"
+          }
+        },
+        "validation_rules": [
+          "Response should contain single coffee object",
+          "Object must have 'id', 'name', 'description' fields",
+          "ID should match requested ID"
+        ]
+      },
+      {
+        "test_id": "PUT_001",
+        "test_name": "Update Existing Coffee",
+        "method": "PUT",
+        "endpoint": "/api/Coffees/{id}",
+        "headers": {
+          "Content-Type": "application/json",
+          "Accept": "application/json",
+          "ServiceAccessKey": "{{CAPTURED_KEY}}"
+        },
+        "path_parameters": {
+          "id": "{{CAPTURED_ID_FROM_GET_ALL}}"
+        },
+        "request_body": {
+          "id": "{{CAPTURED_ID_FROM_GET_ALL}}",
+          "name": "Premium Colombian Blend - Updated",
+          "description": "Rich, full-bodied coffee with chocolate and caramel notes - Updated for testing purposes"
+        },
+        "expected_response": {
+          "status_code": 200
+        },
+        "validation_rules": [
+          "Status code should be 200 or 204",
+          "Updated coffee should reflect changes when retrieved"
+        ]
+      },
+      {
+        "test_id": "POST_001",
+        "test_name": "Create New Coffee",
+        "method": "POST",
+        "endpoint": "/api/Coffees",
+        "headers": {
+          "Content-Type": "application/json",
+          "Accept": "application/json",
+          "ServiceAccessKey": "{{CAPTURED_KEY}}"
+        },
+        "request_body": {
+          "name": "Artisan Espresso Supreme",
+          "description": "Expertly crafted espresso blend with rich crema and bold flavor profile, perfect for morning energy boost"
+        },
+        "expected_response": {
+          "status_code": 201,
+          "response_structure": {
+            "id": "integer",
+            "name": "string",
+            "description": "string"
+          }
+        },
+        "validation_rules": [
+          "Status code should be 201",
+          "Response should contain created coffee with generated ID",
+          "Name and description should match request"
+        ],
+        "post_execution": [
+          "Capture the generated ID for DELETE operation"
+        ]
+      },
+      {
+        "test_id": "POST_002",
+        "test_name": "Create Second New Coffee",
+        "method": "POST",
+        "endpoint": "/api/Coffees",
+        "headers": {
+          "Content-Type": "application/json",
+          "Accept": "application/json",
+          "ServiceAccessKey": "{{CAPTURED_KEY}}"
+        },
+        "request_body": {
+          "name": "Midnight Roast Deluxe",
+          "description": "Dark roasted coffee beans with smoky undertones and hints of vanilla, ideal for late-night coding sessions"
+        },
+        "expected_response": {
+          "status_code": 201,
+          "response_structure": {
+            "id": "integer",
+            "name": "string",
+            "description": "string"
+          }
+        },
+        "validation_rules": [
+          "Status code should be 201",
+          "Response should contain created coffee with generated ID",
+          "Name and description should match request"
+        ]
+      },
+      {
+        "test_id": "DELETE_001",
+        "test_name": "Delete Recently Created Coffee",
+        "method": "DELETE",
+        "endpoint": "/api/Coffees/{id}",
+        "headers": {
+          "ServiceAccessKey": "{{CAPTURED_KEY}}"
+        },
+        "path_parameters": {
+          "id": "{{NEWLY_CREATED_ID_FROM_POST}}"
+        },
+        "expected_response": {
+          "status_code": 200
+        },
+        "validation_rules": [
+          "Status code should be 200 or 204",
+          "Subsequent GET request for same ID should return 404"
+        ],
+        "post_execution": [
+          "Verify deletion by attempting GET request with deleted ID"
+        ]
+      },
+      {
+        "test_id": "GET_003",
+        "test_name": "Verify Deletion - Get Deleted Coffee",
+        "method": "GET",
+        "endpoint": "/api/Coffees/{id}",
+        "headers": {
+          "Accept": "application/json",
+          "ServiceAccessKey": "{{CAPTURED_KEY}}"
+        },
+        "path_parameters": {
+          "id": "{{DELETED_ID}}"
+        },
+        "expected_response": {
+          "status_code": 404
+        },
+        "validation_rules": [
+          "Status code should be 404",
+          "Confirms successful deletion"
+        ]
+      }
+    ],
+    "test_data_templates": {
+      "coffee_creation_variants": [
+        {
+          "name": "Ethiopian Highland Blend",
+          "description": "Single-origin coffee with floral aroma and bright acidity, sourced from high-altitude farms in Ethiopia"
+        },
+        {
+          "name": "Brazilian Santos Special",
+          "description": "Smooth, nutty coffee with low acidity and medium body, perfect for everyday brewing"
+        },
+        {
+          "name": "Italian Roast Intenso",
+          "description": "Bold, intense coffee with robust flavor and slight bitterness, ideal for espresso preparation"
+        },
+        {
+          "name": "Jamaica Blue Mountain Elite",
+          "description": "Premium coffee with exceptional balance, mild flavor, and lack of bitterness - coffee connoisseur's choice"
+        },
+        {
+          "name": "Hawaiian Kona Gold",
+          "description": "Rare coffee with smooth, rich flavor and subtle nutty undertones, grown on volcanic soil slopes"
+        }
+      ]
+    },
+    "negative_test_cases": [
+      {
+        "test_id": "NEG_001",
+        "test_name": "GET with Invalid Key",
+        "method": "GET",
+        "endpoint": "/api/Coffees",
+        "headers": {
+          "Accept": "application/json",
+          "ServiceAccessKey": "invalid_key_12345"
+        },
+        "expected_response": {
+          "status_code": 401
+        }
+      },
+      {
+        "test_id": "NEG_002",
+        "test_name": "POST with Missing Name Field",
+        "method": "POST",
+        "endpoint": "/api/Coffees",
+        "headers": {
+          "Content-Type": "application/json",
+          "ServiceAccessKey": "{{CAPTURED_KEY}}"
+        },
+        "request_body": {
+          "description": "Coffee without name field"
+        },
+        "expected_response": {
+          "status_code": 400
+        }
+      },
+      {
+        "test_id": "NEG_003",
+        "test_name": "GET Non-existent Coffee ID",
+        "method": "GET",
+        "endpoint": "/api/Coffees/99999",
+        "headers": {
+          "Accept": "application/json",
+          "ServiceAccessKey": "{{CAPTURED_KEY}}"
+        },
+        "expected_response": {
+          "status_code": 404
+        }
+      }
+    ],
+    "execution_sequence": [
+      "GET_001 - Get all coffees to capture existing IDs",
+      "GET_002 - Get specific coffee by ID",
+      "PUT_001 - Update existing coffee",
+      "POST_001 - Create new coffee and capture new ID",
+      "DELETE_001 - Delete the newly created coffee",
+      "GET_003 - Verify deletion"
+    ],
+    "variables": {
+      "CAPTURED_KEY": "Replace with actual service access key",
+      "CAPTURED_ID_FROM_GET_ALL": "Replace with ID from GET all operation",
+      "NEWLY_CREATED_ID_FROM_POST": "Replace with ID returned from POST operation",
+      "DELETED_ID": "ID of the coffee that was deleted"
+    }
+  }
+}

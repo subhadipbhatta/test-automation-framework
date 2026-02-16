@@ -2,6 +2,7 @@
 Pytest configuration and fixtures
 """
 
+import sys
 import pytest
 import asyncio
 import logging
@@ -9,9 +10,26 @@ import os
 from datetime import datetime
 from pathlib import Path
 
+# Add project root to Python path FIRST, before any src imports
+project_root = Path(__file__).parent.parent
+sys.path.insert(0, str(project_root))
+
+# Now import from src (after path is set)
 from src.core.browser_manager import BrowserManager
 from src.utils.config import Config
 
+# Register custom pytest markers
+def pytest_configure(config):
+    """Register custom markers to avoid warnings"""
+    config.addinivalue_line("markers", "web: Web automation tests")
+    config.addinivalue_line("markers", "api: API automation tests")
+    config.addinivalue_line("markers", "salesforce: Salesforce automation tests")
+    config.addinivalue_line("markers", "smoke: Smoke tests")
+    config.addinivalue_line("markers", "regression: Regression tests")
+    config.addinivalue_line("markers", "slow: Slow running tests")
+    config.addinivalue_line("markers", "integration: Integration tests")
+    config.addinivalue_line("markers", "unit: Unit tests")
+    config.addinivalue_line("markers", "database: Database tests")
 
 # Configure logging
 logging.basicConfig(

@@ -1,411 +1,113 @@
 # Test Automation Framework
 
-A comprehensive, enterprise-grade test automation framework built with Python, Playwright, and MCP support. This framework implements the Page Object Model pattern and supports web, API, Salesforce, and MySQL database automation.
-
-## Features
-
-- **Page Object Model (POM)** - Clean, maintainable test structure
-- **Web Automation** - Using Playwright for cross-browser testing
-- **API Automation** - Comprehensive REST API testing capabilities
-- **Salesforce Automation** - Dedicated support for Salesforce UI and API automation
-- **MySQL Database Testing** - Complete MySQL MCP server for database operations
-- **MCP Integration** - Model Context Protocol server for AI-powered test generation
-- **Async/Await Support** - Fully asynchronous framework for better performance
-- **Configuration Management** - Environment-based configuration with `.env` support
-- **Test Data Generation** - Utilities for generating realistic test data
-- **Screenshots on Failure** - Automatic screenshot capture on test failures
-- **Wait Utilities** - Smart waits with configurable polling
-- **HTML Reports** - Detailed test reports with Allure integration
+A comprehensive test automation framework supporting both API and Web testing with organized structure and comprehensive test libraries.
 
 ## Project Structure
 
 ```
 Test-Automation-Framework/
-├── src/                          # Source code
-│   ├── core/                    # Core framework classes
-│   │   ├── base_page.py        # Base page object class
-│   │   ├── browser_manager.py  # Browser lifecycle management
-│   │   └── api_client.py       # Base API client
-│   ├── pages/                   # Web page objects
-│   │   ├── login_page.py       # Login page object
-│   │   └── home_page.py        # Home page object
-│   ├── api/                     # API automation
-│   │   └── test_base.py        # Base API test class
-│   ├── salesforce/              # Salesforce automation
-│   │   ├── auth.py             # Salesforce OAuth2
-│   │   ├── api_client.py       # Salesforce API client
-│   │   └── base_salesforce_page.py  # Salesforce page objects
-│   ├── utils/                   # Utilities
-│   │   ├── config.py           # Configuration management
-│   │   ├── wait_utils.py       # Wait utilities
-│   │   └── data_generator.py   # Test data generation
-│   └── mcp_server/              # MCP server
-│       ├── __init__.py         # MCP server implementation
-│       └── server.py           # Server entry point
-├── tests/                        # Test files
-│   ├── web/                     # Web automation tests
-│   │   ├── test_login.py
-│   │   └── test_home.py
-│   ├── api/                     # API automation tests
-│   │   └── test_api.py
-│   ├── salesforce/              # Salesforce tests
-│   │   └── test_salesforce.py
-│   └── conftest.py             # Pytest fixtures and configuration
-├── config/                       # Configuration files
-├── reports/                      # Test reports (generated)
-├── docs/                         # Documentation
-├── pyproject.toml               # Project configuration
-├── requirements.txt             # Python dependencies
-├── .env.example                 # Example environment file
-└── README.md                    # This file
+├── config/                     # Configuration files
+├── context_library/            # Test context and scenario libraries
+├── docs/
+│   └── markdown/              # All documentation files
+├── prompt_library/            # Prompt engineering libraries
+├── src/                       # Source code and page objects
+├── test-runners/              # Test execution utilities
+├── tests/
+│   ├── api/                   # API test suites
+│   │   ├── CoffeeAPI-TOSCA/   # Coffee API tests
+│   │   └── PayPalAPI/         # PayPal API tests
+│   └── web/
+│       └── TricentisWeb/      # Web automation tests
+├── utils/                     # Utility functions and helpers
+└── venv/                      # Python virtual environment
 ```
 
-## Installation
+## Key Features
+
+### API Testing
+- **Coffee API (TOSCA)**: Complete test suite with Python automation and Postman collections
+- **PayPal API**: Comprehensive test cases with detailed assertion framework
+- **API Testing Prompt Library**: Standardized testing patterns and templates
+
+### Web Testing
+- **Tricentis Web Application**: 15 E2E registration test scenarios
+- **Playwright Integration**: Python-based web automation
+- **JSON-driven Configuration**: Test data and configuration management
+
+### Framework Components
+- **Context Libraries**: Pre-built test scenarios and contexts
+- **Prompt Libraries**: Standardized prompt templates for test generation
+- **Test Runners**: Multiple execution utilities for different test scenarios
+- **Comprehensive Documentation**: Organized in markdown format
+
+## Quick Start
 
 ### Prerequisites
-
-- Python 3.9+
-- pip or poetry
-- Git
+- Python 3.8+
+- Node.js (for Playwright)
+- Virtual environment activated
 
 ### Setup
+1. Activate virtual environment:
+   ```bash
+   source venv/bin/activate
+   ```
 
-1. **Clone the repository**
+2. Install dependencies:
+   ```bash
+   pip install -r requirements.txt
+   npm install
+   ```
 
-```bash
-git clone https://github.com/subhadipbhatta/test-automation-framework.git
-cd test-automation-framework
-```
-
-2. **Create virtual environment**
-
-```bash
-python -m venv venv
-source venv/bin/activate  # On Windows: venv\Scripts\activate
-```
-
-3. **Install dependencies**
-
-```bash
-pip install -r requirements.txt
-```
-
-4. **Install Playwright browsers**
-
-```bash
-playwright install
-```
-
-5. **Configure environment**
-
-```bash
-cp .env.example .env
-# Edit .env with your configuration
-```
-
-## Configuration
-
-### Environment Variables
-
-Create a `.env` file in the project root:
-
-```env
-# Browser Settings
-BROWSER_TYPE=chromium          # chromium, firefox, webkit
-HEADLESS=true                  # true or false
-BASE_URL=http://localhost:3000
-
-# API Settings
-API_BASE_URL=http://localhost:8000
-API_TIMEOUT=30
-
-# Salesforce Settings
-SALESFORCE_INSTANCE=https://login.salesforce.com
-SALESFORCE_CLIENT_ID=your_client_id
-SALESFORCE_CLIENT_SECRET=your_client_secret
-SALESFORCE_USERNAME=your_username
-SALESFORCE_PASSWORD=your_password
-
-# Test Settings
-TEST_TIMEOUT=30000
-SCREENSHOT_ON_FAILURE=true
-REPORT_DIR=./reports
-
-# Playwright Settings
-PLAYWRIGHT_SLOW_MO=0
-PLAYWRIGHT_VIEWPORT_WIDTH=1280
-PLAYWRIGHT_VIEWPORT_HEIGHT=720
-```
-
-## Usage
+3. Run Playwright install:
+   ```bash
+   npx playwright install
+   ```
 
 ### Running Tests
 
-#### Run all tests
+#### API Tests
 ```bash
-pytest
+# Coffee API Tests
+python tests/api/CoffeeAPI-TOSCA/coffee_api.py
+
+# PayPal API Tests (requires API credentials)
+# Check PayPal_API_Test_Cases.json for test specifications
 ```
 
-#### Run web tests only
+#### Web Tests
 ```bash
-pytest tests/web -m web
+# Individual registration test
+python tests/web/TricentisWeb/TricentisWeb_E2E_REG-01.py
+
+# Using test runners
+python test-runners/run_e2e_test.py
 ```
 
-#### Run API tests only
-```bash
-pytest tests/api -m api
-```
+## Documentation
 
-#### Run Salesforce tests only
-```bash
-pytest tests/salesforce -m salesforce
-```
+All documentation is organized in `docs/markdown/`:
+- `README.md` - Main project documentation
+- `QUICK_REFERENCE.md` - Quick reference guide
+- `PROJECT_SUMMARY.md` - Project overview and features
+- `FRAMEWORK_COMPLETE.md` - Comprehensive framework documentation
 
-#### Run with HTML report
-```bash
-pytest --html=reports/report.html --self-contained-html
-```
+## Libraries and Resources
 
-#### Run with coverage
-```bash
-pytest --cov=src --cov-report=html
-```
+### Context Library
+- Web testing contexts for different scenarios
+- Pre-built test data and configurations
 
-#### Run in verbose mode
-```bash
-pytest -v
-```
-
-#### Run specific test file
-```bash
-pytest tests/web/test_login.py
-```
-
-#### Run specific test
-```bash
-pytest tests/web/test_login.py::TestLogin::test_successful_login
-```
-
-### Web Automation Example
-
-```python
-from src.pages.login_page import LoginPage
-from src.pages.home_page import HomePage
-
-async def test_login(page, config):
-    # Initialize page object
-    login_page = LoginPage(page, config.base_url)
-    
-    # Navigate
-    await login_page.navigate()
-    
-    # Wait for page load
-    await login_page.wait_for_page_load()
-    
-    # Perform login
-    await login_page.login("username", "password")
-    
-    # Verify
-    home_page = HomePage(page, config.base_url)
-    assert await home_page.is_logged_in()
-```
-
-### API Automation Example
-
-```python
-from src.core.api_client import APIClient
-from src.api.test_base import APITestBase
-
-async def test_create_user(api_client):
-    # Create API client
-    test_base = APITestBase(api_client)
-    
-    # Make request
-    response = await api_client.post(
-        "/users",
-        data={"name": "John", "email": "john@example.com"}
-    )
-    
-    # Assert
-    await test_base.assert_status_code(response, 201)
-    await test_base.assert_response_contains(response, "id")
-```
-
-### Salesforce Automation Example
-
-```python
-from src.salesforce.auth import SalesforceAuth
-from src.salesforce.api_client import SalesforceAPIClient
-
-async def test_salesforce_query():
-    # Authenticate
-    auth = SalesforceAuth(
-        instance="https://login.salesforce.com",
-        client_id="your_client_id",
-        client_secret="your_client_secret",
-        username="your_username",
-        password="your_password"
-    )
-    
-    token = await auth.authenticate()
-    
-    # Create API client
-    api = SalesforceAPIClient(auth.instance_url, token)
-    
-    # Query
-    result = await api.query("SELECT Id, Name FROM Account LIMIT 10")
-    
-    # Get metadata
-    metadata = await api.get_metadata("Account")
-```
-
-### Using Test Data Generator
-
-```python
-from src.utils.data_generator import DataGenerator
-
-# Generate random data
-email = DataGenerator.generate_email()
-username = DataGenerator.generate_username()
-password = DataGenerator.generate_password()
-
-# Generate complete user data
-user_data = DataGenerator.generate_user_data()
-```
-
-### Using Wait Utilities
-
-```python
-from src.utils.wait_utils import WaitUtils
-
-# Wait for condition
-await WaitUtils.wait_until(
-    condition=async_callable,
-    timeout=10,
-    message="Condition not met"
-)
-
-# Wait for element state
-await WaitUtils.wait_for_element_state(
-    element_locator=element,
-    state="visible",
-    timeout=5
-)
-
-# Wait for text
-await WaitUtils.wait_for_text(
-    element_locator=element,
-    text="Expected text",
-    timeout=5
-)
-```
-
-## Page Object Model Pattern
-
-### Creating a Page Object
-
-```python
-from src.core.base_page import BasePage
-from playwright.async_api import Page
-
-class MyPage(BasePage):
-    """My custom page object"""
-    
-    # Define locators as class attributes
-    TITLE = "h1.title"
-    BUTTON = "button[id='submit']"
-    INPUT = "input[name='search']"
-    
-    async def wait_for_page_load(self) -> None:
-        """Wait for page-specific elements"""
-        await self.wait_for_selector(self.TITLE)
-    
-    async def click_button(self) -> None:
-        """Custom action method"""
-        await self.click(self.BUTTON)
-    
-    async def search(self, query: str) -> None:
-        """Custom search action"""
-        await self.fill_text(self.INPUT, query)
-```
-
-## Best Practices
-
-1. **Use Page Objects** - Keep test logic separated from page interactions
-2. **Async/Await** - Use async patterns for better performance
-3. **Explicit Waits** - Use waits instead of sleeps
-4. **Data Generators** - Use for realistic test data
-5. **Configuration** - Externalize configuration to `.env`
-6. **Logging** - Use logging for debugging
-7. **Screenshots** - Enable on failure for debugging
-8. **Fixtures** - Use pytest fixtures for setup/teardown
-9. **Markers** - Use markers to categorize tests
-10. **Comments** - Document complex test logic
-
-## MCP Server Integration
-
-The framework includes an MCP server for AI-powered test automation:
-
-```python
-from src.mcp_server import PlaywrightMCPServer
-
-server = PlaywrightMCPServer()
-tools = server.get_tools()
-```
-
-Available tools:
-- navigate - Navigate to URL
-- click - Click elements
-- fill - Fill input fields
-- get_text - Extract text
-- wait_for_selector - Wait for elements
-- take_screenshot - Capture screenshots
-- execute_script - Run JavaScript
-- select_option - Select dropdown options
-
-## Troubleshooting
-
-### Browser Installation Issues
-
-```bash
-# Install browser dependencies
-playwright install-deps
-```
-
-### Timeout Issues
-
-Increase timeout in `.env`:
-```env
-TEST_TIMEOUT=60000
-```
-
-### Credential Issues
-
-Verify `.env` file has correct credentials and is not in version control.
+### Prompt Library
+- API testing prompt templates
+- Web testing scenario prompts
+- Standardized test case generation patterns
 
 ## Contributing
 
-1. Fork the repository
-2. Create a feature branch
-3. Make your changes
-4. Add tests
-5. Submit a pull request
+See `docs/markdown/CONTRIBUTING.md` for contribution guidelines.
 
 ## License
 
-MIT License - see LICENSE file for details
-
-## Support
-
-For issues and questions:
-- GitHub Issues: https://github.com/subhadipbhatta/test-automation-framework/issues
-- Documentation: https://github.com/subhadipbhatta/test-automation-framework/docs
-
-## Roadmap
-
-- [ ] Visual regression testing
-- [ ] Performance testing integration
-- [ ] Mobile testing support
-- [ ] Custom report templates
-- [ ] Test result analytics
-- [ ] Parallel execution optimization
+See `LICENSE` file for license information.

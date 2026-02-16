@@ -1,0 +1,311 @@
+{
+  "testPlan": {
+    "name": "User Registration Test Suite",
+    "overview": "Comprehensive test cases for user registration functionality including positive, negative, and edge case scenarios",
+    "targetApplication": "Demo Web Shop - Registration Module",
+    "database": "WebTestingDemo.RegistrationInfo",
+    "testSuites": [
+      {
+        "suiteName": "Positive Registration Flow",
+        "description": "Happy path scenarios for successful user registration",
+        "testCases": [
+          {
+            "testCaseId": "REG_POS_001",
+            "testCaseName": "Valid User Registration - Male",
+            "priority": "High",
+            "testData": {
+              "gender": "Male",
+              "firstName": "John",
+              "lastName": "Smith",
+              "email": "john.smith.test@example.com",
+              "password": "SecurePass123!",
+              "confirmPassword": "SecurePass123!"
+            },
+            "preConditions": [
+              "User is not already registered",
+              "Registration page is accessible",
+              "Database connection is established"
+            ],
+            "testSteps": [
+              {
+                "stepNumber": 1,
+                "action": "Navigate to registration page",
+                "expectedResult": "Registration form is displayed with all required fields"
+              },
+              {
+                "stepNumber": 2,
+                "action": "Select gender as 'Male'",
+                "expectedResult": "Male gender option is selected"
+              },
+              {
+                "stepNumber": 3,
+                "action": "Enter first name: 'John'",
+                "expectedResult": "First name field accepts the input"
+              },
+              {
+                "stepNumber": 4,
+                "action": "Enter last name: 'Smith'",
+                "expectedResult": "Last name field accepts the input"
+              },
+              {
+                "stepNumber": 5,
+                "action": "Enter email: 'john.smith.test@example.com'",
+                "expectedResult": "Email field accepts valid email format"
+              },
+              {
+                "stepNumber": 6,
+                "action": "Enter password: 'SecurePass123!'",
+                "expectedResult": "Password field accepts the input (masked)"
+              },
+              {
+                "stepNumber": 7,
+                "action": "Enter confirm password: 'SecurePass123!'",
+                "expectedResult": "Confirm password field accepts matching password"
+              },
+              {
+                "stepNumber": 8,
+                "action": "Click Register button",
+                "expectedResult": "Registration is successful, success message is displayed"
+              },
+              {
+                "stepNumber": 9,
+                "action": "Verify database entry using: SELECT * FROM RegistrationInfo WHERE email = 'john.smith.test@example.com'",
+                "expectedResult": "New user record is created with auto-generated uid and hashed password"
+              }
+            ],
+            "databaseValidation": {
+              "table": "RegistrationInfo",
+              "query": "SELECT id, uid, Gender, firstName, lastName, email FROM RegistrationInfo WHERE email = 'john.smith.test@example.com'",
+              "expectedFields": {
+                "Gender": "Male",
+                "firstName": "John",
+                "lastName": "Smith",
+                "email": "john.smith.test@example.com",
+                "uid": "auto-generated (pattern: user{timestamp})",
+                "pwd": "hashed_password (not plain text)"
+              }
+            }
+          },
+          {
+            "testCaseId": "REG_POS_002",
+            "testCaseName": "Valid User Registration - Female",
+            "priority": "High",
+            "testData": {
+              "gender": "Female",
+              "firstName": "Sarah",
+              "lastName": "Johnson",
+              "email": "sarah.johnson.test@example.com",
+              "password": "MySecurePass456#",
+              "confirmPassword": "MySecurePass456#"
+            },
+            "databaseValidation": {
+              "table": "RegistrationInfo",
+              "query": "SELECT * FROM RegistrationInfo WHERE email = 'sarah.johnson.test@example.com'",
+              "expectedFields": {
+                "Gender": "Female",
+                "firstName": "Sarah",
+                "lastName": "Johnson"
+              }
+            }
+          }
+        ]
+      },
+      {
+        "suiteName": "Negative Registration Flow",
+        "description": "Test cases for invalid inputs and error scenarios",
+        "testCases": [
+          {
+            "testCaseId": "REG_NEG_001",
+            "testCaseName": "Registration with Empty Required Fields",
+            "priority": "High",
+            "testSteps": [
+              {
+                "stepNumber": 1,
+                "action": "Navigate to registration page",
+                "expectedResult": "Registration form is displayed"
+              },
+              {
+                "stepNumber": 2,
+                "action": "Leave all required fields empty",
+                "expectedResult": "Fields remain empty"
+              },
+              {
+                "stepNumber": 3,
+                "action": "Click Register button",
+                "expectedResult": "Validation errors displayed for required fields"
+              },
+              {
+                "stepNumber": 4,
+                "action": "Verify no database entry: SELECT COUNT(*) FROM RegistrationInfo WHERE email = ''",
+                "expectedResult": "Count should be 0 - no empty email records created"
+              }
+            ],
+            "expectedResults": [
+              "Registration fails with validation errors",
+              "No database entry created",
+              "User remains on registration page"
+            ]
+          },
+          {
+            "testCaseId": "REG_NEG_002",
+            "testCaseName": "Registration with Invalid Email Format",
+            "priority": "High",
+            "testData": {
+              "email": "invalid-email-format"
+            },
+            "expectedResults": [
+              "Email validation error displayed",
+              "Registration prevented",
+              "No database record created"
+            ]
+          },
+          {
+            "testCaseId": "REG_NEG_003",
+            "testCaseName": "Registration with Mismatched Passwords",
+            "priority": "High",
+            "testData": {
+              "password": "Password123!",
+              "confirmPassword": "DifferentPassword456#"
+            },
+            "expectedResults": [
+              "Password mismatch error displayed",
+              "Registration fails",
+              "No database entry created"
+            ]
+          },
+          {
+            "testCaseId": "REG_NEG_004",
+            "testCaseName": "Registration with Existing Email",
+            "priority": "High",
+            "preConditions": [
+              "User with test email already exists in database"
+            ],
+            "testSteps": [
+              {
+                "stepNumber": 1,
+                "action": "Verify existing user: SELECT * FROM RegistrationInfo WHERE email = 'existing@example.com'",
+                "expectedResult": "User record exists"
+              },
+              {
+                "stepNumber": 2,
+                "action": "Attempt registration with same email",
+                "expectedResult": "Duplicate email error displayed"
+              },
+              {
+                "stepNumber": 3,
+                "action": "Verify no duplicate created: SELECT COUNT(*) FROM RegistrationInfo WHERE email = 'existing@example.com'",
+                "expectedResult": "Count remains 1"
+              }
+            ]
+          }
+        ]
+      },
+      {
+        "suiteName": "Security and Data Validation",
+        "description": "Security testing and data validation scenarios",
+        "testCases": [
+          {
+            "testCaseId": "REG_SEC_001",
+            "testCaseName": "SQL Injection Prevention",
+            "priority": "Critical",
+            "testData": {
+              "firstName": "'; DROP TABLE RegistrationInfo; --",
+              "lastName": "SQLInjection",
+              "email": "sqltest@example.com"
+            },
+            "testSteps": [
+              {
+                "stepNumber": 1,
+                "action": "Enter SQL injection payload in firstName",
+                "expectedResult": "Input accepted as text"
+              },
+              {
+                "stepNumber": 2,
+                "action": "Complete registration",
+                "expectedResult": "Registration processed safely"
+              },
+              {
+                "stepNumber": 3,
+                "action": "Verify database integrity: SHOW TABLES",
+                "expectedResult": "RegistrationInfo table still exists"
+              },
+              {
+                "stepNumber": 4,
+                "action": "Check stored data: SELECT firstName FROM RegistrationInfo WHERE email = 'sqltest@example.com'",
+                "expectedResult": "Malicious SQL stored as harmless text"
+              }
+            ]
+          },
+          {
+            "testCaseId": "REG_SEC_002",
+            "testCaseName": "Password Security Validation",
+            "priority": "High",
+            "testSteps": [
+              {
+                "stepNumber": 1,
+                "action": "Register user with password 'TestPassword123!'",
+                "expectedResult": "Registration successful"
+              },
+              {
+                "stepNumber": 2,
+                "action": "Verify password hashing: SELECT pwd FROM RegistrationInfo WHERE email = 'testuser@example.com'",
+                "expectedResult": "Password is hashed, not 'TestPassword123!'"
+              }
+            ]
+          }
+        ]
+      }
+    ],
+    "randomTestData": {
+      "generator": "Create random users with timestamp-based uniqueness",
+      "sampleUsers": [
+        {
+          "gender": "Male",
+          "firstName": "Michael",
+          "lastName": "Anderson",
+          "email": "michael.anderson.{timestamp}@testmail.com",
+          "password": "TestPass123!",
+          "expectedUID": "user{timestamp}"
+        },
+        {
+          "gender": "Female", 
+          "firstName": "Emily",
+          "lastName": "Williams",
+          "email": "emily.williams.{timestamp}@testmail.com",
+          "password": "SecurePass456#",
+          "expectedUID": "user{timestamp}"
+        }
+      ]
+    },
+    "databaseQueries": {
+      "verifyUserCreated": "SELECT * FROM RegistrationInfo WHERE email = '{email}'",
+      "checkUniqueUID": "SELECT COUNT(*) FROM RegistrationInfo WHERE uid = '{uid}'",
+      "verifyPasswordHashed": "SELECT pwd FROM RegistrationInfo WHERE email = '{email}' AND pwd != '{plainPassword}'",
+      "getUserByEmail": "SELECT id, uid, Gender, firstName, lastName, email, created_at FROM RegistrationInfo WHERE email = '{email}'",
+      "cleanupTestUsers": "DELETE FROM RegistrationInfo WHERE email LIKE '%@testmail.com'"
+    },
+    "automationSelectors": {
+      "genderMale": "input[value='Male']",
+      "genderFemale": "input[value='Female']", 
+      "firstName": "#FirstName, input[name='FirstName']",
+      "lastName": "#LastName, input[name='LastName']",
+      "email": "#Email, input[name='Email']",
+      "password": "#Password, input[name='Password']",
+      "confirmPassword": "#ConfirmPassword, input[name='ConfirmPassword']",
+      "registerButton": "#register-button, input[value='Register']"
+    },
+    "testMetrics": {
+      "totalTestCases": 9,
+      "criticalTests": 1,
+      "highPriorityTests": 7,
+      "mediumPriorityTests": 1,
+      "coverageAreas": [
+        "Positive Registration Flow",
+        "Input Validation",
+        "Security Testing", 
+        "Database Integration",
+        "Error Handling"
+      ]
+    }
+  }
+}

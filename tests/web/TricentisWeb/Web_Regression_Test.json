@@ -1,0 +1,527 @@
+{
+  "test_suite": {
+    "name": "WebTestingDemo E2E Regression Test Suite",
+    "version": "1.0",
+    "created_date": "2026-02-12",
+    "description": "Comprehensive end-to-end regression test cases for Demo Web Shop covering complete user journey from registration to order completion",
+    "base_url": "https://demowebshop.tricentis.com",
+    "test_environment": "Demo Environment",
+    "total_test_cases": 15
+  },
+  "test_data": {
+    "dynamic_user_data": {
+      "note": "Execute 'python db_query_api.py' to get latest registered user credentials",
+      "placeholders": {
+        "firstName": "{latestFirstName}",
+        "lastName": "{latestLastName}",
+        "email": "{latestEmail}",
+        "password": "{latestPassword}",
+        "gender": "{latestGender}",
+        "uid": "{latestUserUID}"
+      }
+    },
+    "test_products": {
+      "product1": "Build your own cheap computer",
+      "product2": "Simple Computer", 
+      "product3": "Smartphone",
+      "search_keywords": ["computer", "book", "jewelry", "electronics"]
+    },
+    "test_addresses": {
+      "shipping_address": {
+        "address": "123 Test Street",
+        "city": "Test City",
+        "zipCode": "12345",
+        "country": "United States",
+        "phone": "+1-555-123-4567"
+      }
+    }
+  },
+  "regression_test_cases": [
+    {
+      "test_id": "E2E_REG_001",
+      "test_name": "Complete User Registration to First Purchase Journey",
+      "priority": "Critical",
+      "test_type": "End-to-End",
+      "context_reference": "user_management_context.md, product_management_context.md, shopping_cart_context.md, checkout_context.md",
+      "prompt_references": ["REG_001_Valid_Male_Registration", "LOGIN_001_Valid_Credentials", "SEARCH_001_Keyword_Search", "CART_001_Add_Single_Item", "CHECKOUT_002_Registered_User_Checkout"],
+      "description": "Test complete user journey from registration to successful order placement",
+      "preconditions": [
+        "Website is accessible",
+        "Database is available for validation",
+        "Payment system is in demo mode"
+      ],
+      "test_steps": [
+        {
+          "step": 1,
+          "action": "Navigate to registration page",
+          "data": {
+            "url": "https://demowebshop.tricentis.com/register"
+          },
+          "expected_result": "Registration page loads successfully"
+        },
+        {
+          "step": 2,
+          "action": "Complete user registration with valid data",
+          "data": {
+            "gender": "Male",
+            "firstName": "AutoTest",
+            "lastName": "User{timestamp}",
+            "email": "autotest.{timestamp}@testmail.com",
+            "password": "TestPass123!",
+            "confirmPassword": "TestPass123!"
+          },
+          "expected_result": "User registered successfully, redirect to confirmation page"
+        },
+        {
+          "step": 3,
+          "action": "Validate user creation in database",
+          "data": {
+            "validation_query": "SELECT * FROM RegistrationInfo WHERE email = '{email}'"
+          },
+          "expected_result": "User record exists with encrypted password and unique UID"
+        },
+        {
+          "step": 4,
+          "action": "Login with newly registered credentials",
+          "data": {
+            "email": "{registered_email}",
+            "password": "TestPass123!"
+          },
+          "expected_result": "Successful login, user session established"
+        },
+        {
+          "step": 5,
+          "action": "Search for product and add to cart",
+          "data": {
+            "search_term": "computer",
+            "product": "{first_search_result}",
+            "quantity": 1
+          },
+          "expected_result": "Product found and added to cart successfully"
+        },
+        {
+          "step": 6,
+          "action": "Complete checkout process",
+          "data": {
+            "checkout_type": "registered_user",
+            "payment_method": "Credit Card"
+          },
+          "expected_result": "Order placed successfully with confirmation"
+        }
+      ],
+      "validation_points": [
+        "User registration data integrity",
+        "Login session establishment",
+        "Product search functionality", 
+        "Cart management accuracy",
+        "Order completion and confirmation"
+      ],
+      "estimated_duration": "8-10 minutes"
+    },
+    {
+      "test_id": "E2E_REG_002", 
+      "test_name": "Guest User Shopping and Checkout Flow",
+      "priority": "High",
+      "test_type": "End-to-End",
+      "context_reference": "product_management_context.md, shopping_cart_context.md, checkout_context.md",
+      "prompt_references": ["SEARCH_002_Category_Browse", "PRODUCT_001_Detail_Page_Navigation", "CART_002_Add_Multiple_Different_Items", "CHECKOUT_001_Guest_Checkout_Flow"],
+      "description": "Test guest user complete shopping experience without registration",
+      "test_steps": [
+        {
+          "step": 1,
+          "action": "Browse products by category",
+          "data": {"category": "Computers"},
+          "expected_result": "Category page loads with computer products listed"
+        },
+        {
+          "step": 2,
+          "action": "Add multiple different products to cart",
+          "data": {
+            "products": [
+              {"category": "Computers", "quantity": 1},
+              {"category": "Electronics", "quantity": 2},
+              {"category": "Books", "quantity": 1}
+            ]
+          },
+          "expected_result": "All products added to cart from different categories"
+        },
+        {
+          "step": 3,
+          "action": "Complete guest checkout",
+          "data": {
+            "checkout_type": "guest",
+            "customer_info": {
+              "firstName": "Guest",
+              "lastName": "User",
+              "email": "guest.{timestamp}@testmail.com"
+            }
+          },
+          "expected_result": "Guest order completed successfully"
+        }
+      ],
+      "estimated_duration": "6-8 minutes"
+    },
+    {
+      "test_id": "E2E_REG_003",
+      "test_name": "User Profile Management and Order History",
+      "priority": "High", 
+      "test_type": "End-to-End",
+      "context_reference": "user_management_context.md",
+      "prompt_references": ["LOGIN_001_Valid_Credentials", "PROFILE_001_View_User_Profile", "PROFILE_002_Update_Profile_Information"],
+      "description": "Test user profile access, information update, and order history",
+      "test_steps": [
+        {
+          "step": 1,
+          "action": "Login with existing user",
+          "data": {
+            "email": "{latestEmail}",
+            "password": "{latestPassword}"
+          },
+          "expected_result": "User successfully logged in"
+        },
+        {
+          "step": 2,
+          "action": "Validate and update profile information",
+          "data": {
+            "updates": {
+              "firstName": "{latestFirstName}_Updated",
+              "lastName": "{latestLastName}_Updated"
+            }
+          },
+          "expected_result": "Profile updated and changes persisted"
+        },
+        {
+          "step": 3,
+          "action": "Review order history",
+          "data": {"section": "order_history"},
+          "expected_result": "Order history displays user's previous orders accurately"
+        }
+      ],
+      "estimated_duration": "5-6 minutes"
+    },
+    {
+      "test_id": "E2E_REG_004",
+      "test_name": "Advanced Product Search and Filtering",
+      "priority": "Medium",
+      "test_type": "End-to-End",
+      "context_reference": "product_management_context.md",
+      "prompt_references": ["SEARCH_001_Keyword_Search", "SEARCH_003_Price_Filter", "SEARCH_004_Sort_Products"],
+      "description": "Test comprehensive product search, filtering, and sorting",
+      "test_steps": [
+        {
+          "step": 1,
+          "action": "Perform keyword search with filters",
+          "data": {
+            "search_term": "computer",
+            "price_range": {"min": 100, "max": 500},
+            "sort": "Price: Low to High"
+          },
+          "expected_result": "Filtered and sorted results display correctly"
+        },
+        {
+          "step": 2,
+          "action": "Test search result consistency",
+          "data": {"validation": "search_result_relevance"},
+          "expected_result": "All results match search criteria and filters"
+        }
+      ],
+      "estimated_duration": "7-9 minutes"
+    },
+    {
+      "test_id": "E2E_REG_005",
+      "test_name": "Shopping Cart Operations and Persistence",
+      "priority": "Critical",
+      "test_type": "End-to-End",
+      "context_reference": "shopping_cart_context.md",
+      "prompt_references": ["CART_001_Add_Single_Item", "CART_003_Update_Item_Quantities", "CART_004_Remove_Items_From_Cart"],
+      "description": "Test comprehensive cart functionality and persistence",
+      "test_steps": [
+        {
+          "step": 1,
+          "action": "Add multiple products to cart",
+          "data": {
+            "products": [
+              {"name": "Computer", "quantity": 1},
+              {"name": "Book", "quantity": 3}
+            ]
+          },
+          "expected_result": "Products added with correct quantities"
+        },
+        {
+          "step": 2,
+          "action": "Update quantities and remove items",
+          "data": {
+            "update": {"product": "Computer", "quantity": 5},
+            "remove": "Book"
+          },
+          "expected_result": "Cart updated correctly with accurate calculations"
+        },
+        {
+          "step": 3,
+          "action": "Test cart persistence across navigation",
+          "data": {"navigation_test": true},
+          "expected_result": "Cart contents persist during site navigation"
+        }
+      ],
+      "estimated_duration": "6-8 minutes"
+    },
+    {
+      "test_id": "E2E_REG_006",
+      "test_name": "Payment Method Validation and Error Handling",
+      "priority": "High",
+      "test_type": "End-to-End",
+      "context_reference": "checkout_context.md",
+      "prompt_references": ["CHECKOUT_004_Payment_Methods", "CHECKOUT_007_Checkout_Error_Handling"],
+      "description": "Test different payment methods and error scenarios",
+      "test_steps": [
+        {
+          "step": 1,
+          "action": "Test invalid payment data",
+          "data": {
+            "invalid_card": "1234567890123456",
+            "invalid_expiry": "13/20"
+          },
+          "expected_result": "Payment validation errors displayed appropriately"
+        },
+        {
+          "step": 2,
+          "action": "Complete successful payment",
+          "data": {
+            "payment_method": "Credit Card",
+            "valid_card": "4111111111111111"
+          },
+          "expected_result": "Payment processed successfully"
+        }
+      ],
+      "estimated_duration": "7-9 minutes"
+    },
+    {
+      "test_id": "E2E_REG_007",
+      "test_name": "Authentication Security and Session Management",
+      "priority": "Critical",
+      "test_type": "End-to-End",
+      "context_reference": "user_management_context.md",
+      "prompt_references": ["LOGIN_002_Invalid_Password", "LOGIN_005_Session_Persistence", "LOGIN_006_Logout_Functionality"],
+      "description": "Test authentication security and session handling",
+      "test_steps": [
+        {
+          "step": 1,
+          "action": "Test invalid login attempts",
+          "data": {
+            "invalid_scenarios": [
+              {"email": "{latestEmail}", "password": "WrongPassword"},
+              {"email": "nonexistent@test.com", "password": "AnyPassword"}
+            ]
+          },
+          "expected_result": "Login fails with appropriate security messages"
+        },
+        {
+          "step": 2,
+          "action": "Test session persistence and logout",
+          "data": {"session_test": true},
+          "expected_result": "Session maintains correctly and logout works properly"
+        }
+      ],
+      "estimated_duration": "6-7 minutes"
+    },
+    {
+      "test_id": "E2E_REG_008",
+      "test_name": "Product Information Cross-Page Consistency",
+      "priority": "Medium",
+      "test_type": "End-to-End",
+      "context_reference": "product_management_context.md",
+      "prompt_references": ["PRODUCT_001_Detail_Page_Navigation", "VALIDATE_005_Product_Data_Consistency"],
+      "description": "Validate product information consistency across pages",
+      "test_steps": [
+        {
+          "step": 1,
+          "action": "Track product information across pages",
+          "data": {
+            "product": "Build your own cheap computer",
+            "pages": ["search", "detail", "cart", "checkout"]
+          },
+          "expected_result": "Product information remains consistent across all pages"
+        }
+      ],
+      "estimated_duration": "8-10 minutes"
+    },
+    {
+      "test_id": "E2E_REG_009",
+      "test_name": "Multiple User Registration Validation",
+      "priority": "High",
+      "test_type": "End-to-End",
+      "context_reference": "user_management_context.md",
+      "prompt_references": ["REG_002_Valid_Female_Registration", "REG_003_Duplicate_Email_Validation"],
+      "description": "Test registration of multiple users with validation",
+      "test_steps": [
+        {
+          "step": 1,
+          "action": "Register multiple users with different data",
+          "data": {
+            "users": [
+              {"gender": "Female", "email": "female.{timestamp}@test.com"},
+              {"gender": "Male", "email": "male.{timestamp}@test.com"}
+            ]
+          },
+          "expected_result": "Both users registered with unique records"
+        },
+        {
+          "step": 2,
+          "action": "Test duplicate email prevention",
+          "data": {"duplicate_email_test": true},
+          "expected_result": "Duplicate email registration properly prevented"
+        }
+      ],
+      "estimated_duration": "9-12 minutes"
+    },
+    {
+      "test_id": "E2E_REG_010",
+      "test_name": "Shipping and Billing Address Management",
+      "priority": "Medium",
+      "test_type": "End-to-End",
+      "context_reference": "checkout_context.md",
+      "prompt_references": ["CHECKOUT_003_Shipping_Options", "PROFILE_005_Address_Management"],
+      "description": "Test address management during checkout",
+      "test_steps": [
+        {
+          "step": 1,
+          "action": "Complete checkout with different shipping and billing addresses",
+          "data": {
+            "shipping_address": {"address": "789 Ship St", "city": "Ship City"},
+            "billing_address": {"address": "321 Bill St", "city": "Bill City"}
+          },
+          "expected_result": "Order completed with separate addresses"
+        }
+      ],
+      "estimated_duration": "7-9 minutes"
+    },
+    {
+      "test_id": "E2E_REG_011",
+      "test_name": "Cross-Browser Session Persistence",
+      "priority": "Medium",
+      "test_type": "End-to-End",
+      "context_reference": "shopping_cart_context.md, user_management_context.md",
+      "prompt_references": ["CART_005_Cart_Persistence", "LOGIN_005_Session_Persistence"],
+      "description": "Test session and cart persistence across browser sessions",
+      "test_steps": [
+        {
+          "step": 1,
+          "action": "Test session persistence across page refreshes",
+          "data": {"persistence_test": true},
+          "expected_result": "Session and cart maintain across browser actions"
+        }
+      ],
+      "estimated_duration": "10-12 minutes"
+    },
+    {
+      "test_id": "E2E_REG_012",
+      "test_name": "Comprehensive Form Validation and Error Recovery",
+      "priority": "High",
+      "test_type": "End-to-End",
+      "context_reference": "user_management_context.md, checkout_context.md",
+      "prompt_references": ["REG_004_Password_Mismatch_Validation", "CHECKOUT_007_Checkout_Error_Handling"],
+      "description": "Test form validation and error recovery across all forms",
+      "test_steps": [
+        {
+          "step": 1,
+          "action": "Test validation errors across registration, login, and checkout",
+          "data": {"comprehensive_validation_test": true},
+          "expected_result": "All forms properly validate and allow error recovery"
+        }
+      ],
+      "estimated_duration": "12-15 minutes"
+    },
+    {
+      "test_id": "E2E_REG_013",
+      "test_name": "Category Navigation and Multi-Category Purchase",
+      "priority": "Medium",
+      "test_type": "End-to-End",
+      "context_reference": "product_management_context.md",
+      "prompt_references": ["SEARCH_002_Category_Browse", "PRODUCT_006_Related_Products"],
+      "description": "Test deep category navigation and cross-category purchasing",
+      "test_steps": [
+        {
+          "step": 1,
+          "action": "Navigate through multiple categories and purchase",
+          "data": {
+            "categories": ["Books", "Computers", "Jewelry"],
+            "purchase_from_each": true
+          },
+          "expected_result": "Multi-category order completed successfully"
+        }
+      ],
+      "estimated_duration": "10-13 minutes"
+    },
+    {
+      "test_id": "E2E_REG_014",
+      "test_name": "Password Security and User Variations",
+      "priority": "High",
+      "test_type": "End-to-End",
+      "context_reference": "user_management_context.md",
+      "prompt_references": ["REG_001_Valid_Male_Registration", "PROFILE_003_Change_Password"],
+      "description": "Test password security features and user management",
+      "test_steps": [
+        {
+          "step": 1,
+          "action": "Test password security features",
+          "data": {
+            "strong_password": "StrongP@ssw0rd!123",
+            "password_change_test": true
+          },
+          "expected_result": "Password security properly enforced and changes work"
+        }
+      ],
+      "estimated_duration": "9-11 minutes"
+    },
+    {
+      "test_id": "E2E_REG_015",
+      "test_name": "Complete Order Lifecycle with Full Validation",
+      "priority": "Critical",
+      "test_type": "End-to-End",
+      "context_reference": "All context files",
+      "prompt_references": ["VALIDATE_004_Order_Data_Integrity", "VALIDATE_007_Price_Calculation_Accuracy"],
+      "description": "Test complete order lifecycle with comprehensive validation",
+      "test_steps": [
+        {
+          "step": 1,
+          "action": "Execute complete user journey",
+          "data": {
+            "flow": "registration -> login -> search -> cart -> checkout -> validation"
+          },
+          "expected_result": "Complete order lifecycle executed with all validations passed"
+        },
+        {
+          "step": 2,
+          "action": "Validate order data integrity across all systems",
+          "data": {"comprehensive_validation": true},
+          "expected_result": "Order data consistent across UI, database, and user history"
+        }
+      ],
+      "estimated_duration": "15-20 minutes"
+    }
+  ],
+  "test_execution_summary": {
+    "total_estimated_time": "130-165 minutes",
+    "critical_tests": 4,
+    "high_priority_tests": 6,
+    "medium_priority_tests": 5,
+    "coverage_areas": [
+      "User Registration and Authentication",
+      "Product Search and Discovery",
+      "Shopping Cart Management",
+      "Checkout Process",
+      "User Profile Management",
+      "Order Lifecycle",
+      "Data Validation and Security",
+      "Cross-page Consistency",
+      "Error Handling and Recovery"
+    ],
+    "validation_coverage": [
+      "Database integrity validation",
+      "UI consistency validation",
+      "Calculation accuracy validation",
+      "Security validation",
+      "Session management validation"
+    ]
+  }
+}
