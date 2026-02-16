@@ -30,7 +30,7 @@ class BaseTestConfig:
     """Base configuration for all test cases"""
     
     BASE_URL = "https://demowebshop.tricentis.com"
-    SCREENSHOT_DIR = "test_screenshots"
+    SCREENSHOT_DIR = "test-artifacts/screenshots"
     TEST_DATA_FILE = "Web_Regression_Test.json"
     
     @classmethod

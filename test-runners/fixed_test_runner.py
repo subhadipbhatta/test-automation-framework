@@ -31,7 +31,7 @@ class TestResult:
 class BaseTestConfig:
     """Base configuration for all test cases"""
     BASE_URL = "https://demowebshop.tricentis.com"
-    SCREENSHOT_DIR = "test_screenshots"
+    SCREENSHOT_DIR = "test-artifacts/screenshots"
     
     @classmethod
     def setup_screenshot_directory(cls):
